@@ -13,14 +13,40 @@ VirtualDesigner は AtelIer のために設計するが、単体のアプリと�
 |---|---|
 | 中身の処理 | UI に頼らない部品（Python の関数・クラス）。窓・メニュー・AtelIer を読み込まない |
 | 入口 1: AtelIer の拡張 | `extension.json` とメニュー（下の「extension.json の形」と「置き場」） |
-| 入口 2: 単体のアプリ | 自分のウィンドウと Setup.exe。AtelIer が無くても起動する |
+| 入口 2: 単体のアプリ | 自分のウィンドウ。AtelIer が無くても起動する（配るのは下の「配る物」の単体の Setup） |
 | 入口 3: ほかの AI サービスから使う口 | MCP のサーバーと、コマンドで呼べる口。中身の処理をそのまま呼ぶ |
 
 - 置き場と設定は、どの入口から使っても同じにする。入口ごとに置き場を持つと、同じ人の設定や作った物が入口ごとに分かれるため
 - 言葉の模型は共通の置き場 `C:\LLM` に置く
 - AtelIer が無くても動き、AtelIer があれば拡張として載る。中身の処理（`virtual_designer` の下の UI に頼らない部品）は AtelIer を読み込まない
 - 中身が決まるまで、どの入口も作らない（押しても何も起きない入口を出さないため）
-- 次は私の推測: ほかの AI サービスから使う口は MCP のサーバー（標準入出力で話す形）にし、コマンドの口は `python -m virtual_designer <操作>` で JSON を返す形にして、2 つが同じ操作の一覧を使う。単体のアプリの Setup.exe は自分の Python を持ち、AtelIer の拡張として入れるときだけ AtelIer の Python で動かす（下の「インストーラーの連携」は拡張として入れるときの決まり）
+- 次は私の推測: ほかの AI サービスから使う口は MCP のサーバー（標準入出力で話す形）にし、コマンドの口は `python -m virtual_designer <操作>` で JSON を返す形にして、2 つが同じ操作の一覧を使う
+
+## AtelIer が統括する（配る物と開発の向き）
+
+AtelIer が 6 つのデザイナーを統括する。開発はデザイナーごとのリポジトリで分担するが、VirtualDesigner の開発は AtelIer のためにする
+（AtelIer で使われない作り込みは、AtelIer を使う人に届かないため）。AtelIer を使う人は拡張だけを入れ、使う物は AtelIer のタイトルの画面で選ぶ。
+
+配る物は 2 つで、拡張だけの Setup が先、単体の Setup は後に作る。デザイナーごとに Python と PySide6 を持つと、容量がかさみ、同じ物が重なって入るため。
+
+| 配る物 | 中身 | 誰向け |
+|---|---|---|
+| 拡張だけの Setup | 拡張のコードと、AtelIer の Python に無い依存だけ。AtelIer の Python と PySide6 で動く。小さい | AtelIer を使う人。AtelIer のインストーラーの選べる部品はこちらを入れる |
+| 単体の Setup | 自分の Python と PySide6 を持つ | AtelIer を使わない人 |
+
+### タイトルの画面に出す物
+
+AtelIer のタイトルの画面に出す名前・絵・一言は、`extension.json` に持たせる。欄の名前と形は私の推測で、AtelIer の側はまだ読まない
+（AtelIer は今 `module`・`attr`・`path` だけを読み、ほかの鍵は飛ばす）。
+
+```json
+{"module": "virtual_designer.extension", "attr": "EXTENSION", "path": ".",
+ "title": {"name": "VirtualDesigner", "image": "title.png", "tagline": "（一言）"}}
+```
+
+- `title.name`: タイトルの画面に出す名前
+- `title.image`: タイトルの画面に出す絵。`extension.json` のあるフォルダーからの道（PNG を私の推測とする）
+- `title.tagline`: 名前の下に出す一言
 
 ## AtelIer の側の一覧
 
@@ -61,7 +87,7 @@ C:\ProgramData\AtelIer\extensions\virtual_designer\virtual_designer\__init__.py 
 - AtelIer が入っているかは `HKLM\Software\AtelIer` の `InstallDir` で見る。あれば `%ProgramData%\AtelIer\extensions\virtual_designer\` に拡張を置き、無ければ AtelIer の置き場には何もしない
 - アンインストールでは、自分の置いた `virtual_designer\` だけを消す。`extensions` を丸ごと消さない
 - AtelIer の Setup.exe の選べる部品「VirtualDesigner も入れる（ネットから取る）」は、このリポジトリの最新の Release から名前に `Setup` を含む `.exe` を取り、`/S` で静かに入れる。だから Setup.exe は `/S` で窓を出さずに入り、終わりの番号 0 で成功を返す形にする。Release が無い間は、AtelIer の側で選べる部品に出さない
-- Python 本体と PySide6 などは入れない（AtelIer の Python で動く）
+- この Setup.exe は拡張だけの Setup にする。Python 本体と PySide6 などは入れない（AtelIer の Python で動く）。単体の Setup は別の物（上の「配る物」）
 
 ## AtelIer の版との合わせ方
 
